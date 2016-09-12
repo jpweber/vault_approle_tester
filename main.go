@@ -2,7 +2,7 @@
 * @Author: Jim Weber
 * @Date:   2016-09-09 10:01:50
 * @Last Modified by:   Jim Weber
-* @Last Modified time: 2016-09-09 15:04:44
+* @Last Modified time: 2016-09-12 17:20:47
  */
 
 package main
@@ -12,6 +12,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"time"
 
 	vaultapi "github.com/hashicorp/vault/api"
 )
@@ -41,6 +42,7 @@ func main() {
 	vaultHost := flag.String("host", "", "Hostname of Vault Server")
 	roleID := flag.String("role", "", "Role ID For Your Application")
 	cubHoleToken := flag.String("cubby", "", "Cubby Hole Token")
+	demo := flag.Bool("demo", false, "Inserts a sleep between steps to make demos clearer")
 
 	// Once all flags are declared, call `flag.Parse()`
 	// to execute the command-line parsing.
@@ -85,6 +87,9 @@ func main() {
 	}
 
 	vaultConfig.SecretID = cubbyResponse.Data["secret_id"]
+	if *demo == true {
+		time.Sleep(time.Second * 5)
+	}
 	log.Println("Received secret ID", vaultConfig.SecretID, "from cubbyhole")
 
 	// login to vault with role-id and secret-id
@@ -100,6 +105,9 @@ func main() {
 		log.Println(err)
 	}
 	vaultConfig.ActiveToken = secret.Auth.ClientToken
+	if *demo == true {
+		time.Sleep(time.Second * 5)
+	}
 	log.Println("Received token", vaultConfig.ActiveToken, "for making future credential requests")
 
 	// make request for the dummy hello world credentials
@@ -110,6 +118,9 @@ func main() {
 		log.Println(err)
 	}
 
+	if *demo == true {
+		time.Sleep(time.Second * 5)
+	}
 	//TODO: @debug
 	log.Println("Secret Data:")
 	log.Println(secret.Data)

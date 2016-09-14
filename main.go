@@ -42,6 +42,7 @@ func main() {
 	vaultHost := flag.String("host", "", "Hostname of Vault Server")
 	roleID := flag.String("role", "", "Role ID For Your Application")
 	cubHoleToken := flag.String("cubby", "", "Cubby Hole Token")
+	secretPath := flag.String("secret", "", "Path to the scret you wish to read from as test verification")
 	demo := flag.Bool("demo", false, "Inserts a sleep between steps to make demos clearer")
 
 	// Once all flags are declared, call `flag.Parse()`
@@ -54,9 +55,6 @@ func main() {
 		RoleID:       *roleID,
 		CubHoleToken: *cubHoleToken,
 	}
-
-	// TODO: @debug
-	log.Printf("%+v", vaultConfig)
 
 	// init vault client config
 	httpClient := &http.Client{}
@@ -81,11 +79,13 @@ func main() {
 		log.Println(err)
 	}
 
+	// Unmarshal and assign the cubby hole reponse in to the struct
 	cubbyResponse := CubbyHoleResponse{}
 	if err := json.Unmarshal([]byte(secret.Data["response"].(string)), &cubbyResponse); err != nil {
 		panic(err)
 	}
 
+	// pull out the secret id from the cubby hole reponse
 	vaultConfig.SecretID = cubbyResponse.Data["secret_id"]
 	if *demo == true {
 		time.Sleep(time.Second * 5)
@@ -111,9 +111,9 @@ func main() {
 	log.Println("Received token", vaultConfig.ActiveToken, "for making future credential requests")
 
 	// make request for the dummy hello world credentials
-	log.Println("Requesting data from secret/dev/identity-api/dummy") // TODO: make this dynamic based on role id maybe?
+	log.Println("Requesting data from " + *secretPath) // TODO: make this dynamic based on role id maybe?
 	client.SetToken(vaultConfig.ActiveToken)
-	secret, err = client.Logical().Read("secret/dev/identity-api/dummy")
+	secret, err = client.Logical().Read(*secretPath)
 	if err != nil {
 		log.Println(err)
 	}
@@ -121,7 +121,9 @@ func main() {
 	if *demo == true {
 		time.Sleep(time.Second * 5)
 	}
-	//TODO: @debug
+	// output secret data
 	log.Println("Secret Data:")
-	log.Println(secret.Data)
+	for k, v := range secret.Data {
+		log.Println("Key:", k, "Value:", v)
+	}
 }
